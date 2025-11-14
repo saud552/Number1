@@ -1,69 +1,93 @@
-<?php 
+<?php
 
-class Api {
-	//public $api_key;
-	public $url = "https://api.spider-service.com?apiKay=";
-	public function __construct($api_key) {
-		$this->url .= $api_key;
+class Api
+{
+	private string $baseUrl = "https://api.spider-service.com";
+	private string $apiKey;
+
+	public function __construct(string $api_key)
+	{
+		$this->apiKey = $api_key;
 	}
-	public function getData($data){
-		$url = $this->url;
-		foreach ($data as $k => $v ) {
-			$url .= "&{$k}={$v}";
+
+	private function request(array $params): ?array
+	{
+		$query = http_build_query(array_merge(['apiKay' => $this->apiKey], $params));
+		$url = "{$this->baseUrl}?{$query}";
+
+		$ch = curl_init($url);
+		curl_setopt_array($ch, [
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_TIMEOUT => 15,
+			CURLOPT_CONNECTTIMEOUT => 5,
+		]);
+
+		$response = curl_exec($ch);
+		if ($response === false) {
+			curl_close($ch);
+			return null;
 		}
-		return json_decode(file_get_contents($url),1);
+
+		curl_close($ch);
+
+		$decoded = json_decode($response, true);
+		return is_array($decoded) ? $decoded : null;
 	}
-	public function getBalance () {
-		$getData = $this->getData(
-			array(
-				"action" => "getBalance"
-			)
-		);
-		if ($getData['error'] == 'INFORMATION_SUCCESS') {
-			return $getData['result']['wallet'];
-		} else {
-			 return 0 ;
+
+	public function getBalance()
+	{
+		$data = $this->request([
+			'action' => 'getBalance',
+		]);
+
+		if (($data['error'] ?? '') === 'INFORMATION_SUCCESS') {
+			return $data['result']['wallet'];
 		}
+
+		return 0;
 	}
-	public function getNumber($countryCode) {
-		$getData = $this->getData(
-			array(
-				"action" => "getNumber",
-				"country" => $countryCode
-			)
-		);
-		if ($getData['error'] == 'INFORMATION_SUCCESS') {
-			return array(
-				'number' => $getData['result']['phone'],
-				'hash_code' => $getData['result']['hash_code'],
-			);
-		} else {
-			 return "error" ;
+
+	public function getNumber($countryCode)
+	{
+		$data = $this->request([
+			'action' => 'getNumber',
+			'country' => $countryCode,
+		]);
+
+		if (($data['error'] ?? '') === 'INFORMATION_SUCCESS') {
+			return [
+				'number' => $data['result']['phone'],
+				'hash_code' => $data['result']['hash_code'],
+			];
 		}
+
+		return "error";
 	}
-	public function getCode($hashCode) {
-		$getData = $this->getData(
-			array(
-				"action" => "getCode",
-				"hash_code" => $hashCode
-			)
-		);
-		if ($getData['error'] == 'INFORMATION_SUCCESS') {
-			return $getData['result'];
-		} else {
-			 return "error" ;
+
+	public function getCode($hashCode)
+	{
+		$data = $this->request([
+			'action' => 'getCode',
+			'hash_code' => $hashCode,
+		]);
+
+		if (($data['error'] ?? '') === 'INFORMATION_SUCCESS') {
+			return $data['result'];
 		}
+
+		return "error";
 	}
-	public function getCountries() {
-		$getData = $this->getData(
-			array(
-				"action" => "getCountrys",
-			)
-		);
-		if ($getData['error'] == 'INFORMATION_SUCCESS') {
-			return $getData['result']['countries'][1];
-		} else {
-			 return "error" ;
+
+	public function getCountries()
+	{
+		$data = $this->request([
+			'action' => 'getCountrys',
+		]);
+
+		if (($data['error'] ?? '') === 'INFORMATION_SUCCESS') {
+			return $data['result']['countries'][1];
 		}
+
+		return "error";
 	}
 }
