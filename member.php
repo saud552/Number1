@@ -387,6 +387,17 @@ $backKeyboard = mkBtn([[$backLabel => 'back']]);
 $replacements = buildReplacements($id, $point, $link);
 $txt = prepareStrings($currentLang, $replacements);
 $changeLanguageLabel = $languageManager->label($currentLang, 'change_language', 'Change Language');
+$maintenanceEnabled = $settings['maintenance']['enabled'] ?? false;
+$maintenanceMessage = $settings['maintenance']['message'] ?? $txt['maintenance_message'];
+
+if ($maintenanceEnabled && $id != $admin) {
+	if (!empty($text)) {
+		send($maintenanceMessage);
+	} else {
+		edit($maintenanceMessage);
+	}
+	return;
+}
 
 if ($subscriptionEnabled && !check_member($id, $subscriptionChannelId)) {
 	$button = [[['text' => $txt['verify_button'], 'url' => $subscriptionLink]]];

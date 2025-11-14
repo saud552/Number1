@@ -72,6 +72,10 @@ if ($text == "/start" || $data == "back") {
 				"استيراد الدول" => "importCountries"
 			),
 			array(
+				"وضع الصيانة" => "maintenanceSettings",
+				"الاذاعة" => "broadcast"
+			),
+			array(
 				"اعدادات التسعير" => "pricingSettings",
 				"الاحصائيات" => "stats"
 			)				
@@ -359,6 +363,60 @@ if ($text == "/start" || $data == "back") {
 	} else {
 		$tx = "صيغة غير صحيحة، استخدم مثال: US 1.75";
 	}
+	edit($tx, $back);
+} else if ($data == "maintenanceSettings") {
+	$mEnabled = $settings['maintenance']['enabled'] ?? false;
+	$mMessage = $settings['maintenance']['message'] ?? "البوت في وضع الصيانة حالياً.";
+	$status = $mEnabled ? "مفعل ✅" : "معطل ❌";
+	$tx = "حالة وضع الصيانة: {$status}\nالرسالة الحالية:\n{$mMessage}";
+	$btn = mkBtn([
+		[
+			"تفعيل" => "toggleMaintenance#on",
+			"تعطيل" => "toggleMaintenance#off"
+		],
+		[
+			"تعديل الرسالة" => "setMaintenanceMessage"
+		],
+		[
+			"رجوع" => "back"
+		]
+	]);
+	edit($tx, $btn);
+} else if ($exData[0] == "toggleMaintenance") {
+	$settings['maintenance']['enabled'] = ($exData[1] ?? 'on') === 'on';
+	saveSettings();
+	$tx = $settings['maintenance']['enabled'] ? "تم تفعيل وضع الصيانة." : "تم تعطيل وضع الصيانة.";
+	edit($tx, $back);
+} else if ($data == "setMaintenanceMessage") {
+	$info[$id]['action'] = "setMaintenanceMessage";
+	saveInfo();
+	$tx = "أرسل رسالة الصيانة التي ستظهر للمستخدمين:";
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "setMaintenanceMessage") {
+	$settings['maintenance']['message'] = $text;
+	saveSettings();
+	$info[$id]['action'] = "";
+	saveInfo();
+	$tx = "تم تحديث رسالة الصيانة.";
+	edit($tx, $back);
+} else if ($data == "broadcast") {
+	$info[$id]['action'] = "broadcast";
+	saveInfo();
+	$tx = "أرسل نص الرسالة التي تريد إذاعتها لجميع المستخدمين.";
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "broadcast") {
+	$audience = array_keys($points ?? []);
+	$success = 0;
+	foreach ($audience as $uid) {
+		if (!$uid) {
+			continue;
+		}
+		send($text, null, $uid);
+		$success++;
+	}
+	$info[$id]['action'] = "";
+	saveInfo();
+	$tx = "تم إرسال الرسالة إلى {$success} مستخدم.";
 	edit($tx, $back);
 } else if ($data == "addContry" || $exData[0] == 'next' || $exData[0] == 'before') {
 	#Lista:

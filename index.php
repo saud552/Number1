@@ -46,6 +46,10 @@ $settings = $storage->load('settings', [
     'pricing' => [
         'margin_percent' => 0,
     ],
+    'maintenance' => [
+        'enabled' => false,
+        'message' => null,
+    ],
 ]);
 
 $telegramClient = new TelegramClient($token);

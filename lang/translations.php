@@ -37,6 +37,7 @@ return [
             'code_pending' => 'لم يصل الكود بعد',
             'code_received' => "💬- تم وصول الكود في الاسفل •\n\n🌎 - الدولة: __c__\n☎️ - الرقم: <code>__num__</code>\n💰- السعر :  __p__$\n💬 - الكود : <code>__code__</code>\n🔑 - كلمة المرور: <code>__pass__</code>\n\n✅- قم بتفعيل الرقم في تطبيق تيليجرام ✳️",
             'purchase_in_progress' => '⏳ توجد عملية شراء قيد التنفيذ، يرجى الانتظار.',
+            'maintenance_message' => "⚙️ البوت في وضع الصيانة حالياً وسيعود قريباً.\nشكراً لتفهمك.",
         ],
     ],
     'en' => [
@@ -75,6 +76,7 @@ return [
             'code_pending' => 'The code has not arrived yet',
             'code_received' => "💬- The code has arrived below •\n\n🌎 - Country: __c__\n☎️ - Number: <code>__num__</code>\n💰- Price: __p__$\n💬 - Code: <code>__code__</code>\n🔑 - Password: <code>__pass__</code>\n\n✅- Please activate the number in the Telegram app ✳️",
             'purchase_in_progress' => 'A purchase is already in progress, please wait.',
+            'maintenance_message' => "⚙️ The bot is currently in maintenance mode and will be back soon.\nThanks for your patience!",
         ],
     ],
     'ru' => [
@@ -113,6 +115,7 @@ return [
             'code_pending' => 'Код еще не пришел',
             'code_received' => "💬- Код пришел ниже •\n\n🌎 - Страна: __c__\n☎️ - Номер: <code>__num__</code>\n💰- Цена: __p__$\n💬 - Код: <code>__code__</code>\n🔑 - Пароль: <code>__pass__</code>\n\n✅- Пожалуйста, активируйте номер в приложении Telegram ✳️",
             'purchase_in_progress' => 'Покупка уже выполняется, подождите.',
+            'maintenance_message' => "⚙️ Бот находится на обслуживании и скоро вернётся.\nСпасибо за ожидание!",
         ],
     ],
     'fa' => [
@@ -151,6 +154,7 @@ return [
             'code_pending' => 'کد هنوز نرسیده است',
             'code_received' => "💬- کد در پایین آمده است •\n\n🌎 - کشور: __c__\n☎️ - شماره: <code>__num__</code>\n💰- قیمت: __p__$\n💬 - کد: <code>__code__</code>\n🔑 - کلمه عبور: <code>__pass__</code>\n\n✅- لطفاً شماره را در برنامه تلگرام فعال کنید ✳️",
             'purchase_in_progress' => 'یک فرایند خرید در حال انجام است، لطفاً کمی صبر کنید.',
+            'maintenance_message' => "⚙️ ربات در حال نگهداری است و به زودی در دسترس خواهد بود.\nاز شکیبایی شما سپاسگزاریم.",
         ],
     ],
     'cht' => [
@@ -189,6 +193,7 @@ return [
             'code_pending' => '代碼尚未到達',
             'code_received' => "💬- 代碼已到達如下 •\n\n🌎 - 國家: __c__\n☎️ - 號碼: <code>__num__</code>\n💰- 價格: __p__$\n💬 - 代碼: <code>__code__</code>\n🔑 - 密碼: <code>__pass__</code>\n\n✅- 請在 Telegram 應用中激活該號碼 ✳️",
             'purchase_in_progress' => '目前有購買請求在處理，請稍候。',
+            'maintenance_message' => "⚙️ 機器人正在維護中，很快恢復服務。\n感謝您的耐心等待。",
         ],
     ],
     'chb' => [
@@ -227,6 +232,7 @@ return [
             'code_pending' => '代码尚未到达',
             'code_received' => "💬- 代码已到达如下 •\n\n🌎 - 国家: __c__\n☎️ - 号码: <code>__num__</code>\n💰- 价格: __p__$\n💬 - 代码: <code>__code__</code>\n🔑 - 密码: <code>__pass__</code>\n\n✅- 请在 Telegram 应用中激活该号码 ✳️",
             'purchase_in_progress' => '正在处理一次购买请求，请稍候。',
+            'maintenance_message' => "⚙️ 机器人正在维护中，很快恢复服务。\n感谢您的耐心等待。",
         ],
     ],
     'tr' => [
@@ -265,6 +271,7 @@ return [
             'code_pending' => 'Kod henüz gelmedi',
             'code_received' => "💬- Kod aşağıda yer alıyor •\n\n🌎 - Ülke: __c__\n☎️ - Numara: <code>__num__</code>\n💰- Fiyat: __p__$\n💬 - Kod: <code>__code__</code>\n🔑 - Şifre: <code>__pass__</code>\n\n✅- Lütfen numarayı Telegram uygulamasında etkinleştir ✳️",
             'purchase_in_progress' => 'Bir satın alma işlemi devam ediyor, lütfen bekle.',
+            'maintenance_message' => "⚙️ Bot şu anda bakım modunda, kısa süre içinde tekrar aktif olacak.\nAnlayışınız için teşekkürler.",
         ],
     ],
 ];
