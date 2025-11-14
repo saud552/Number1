@@ -36,6 +36,7 @@ return [
             'insufficient_balance' => 'رصيدك غير كافي',
             'code_pending' => 'لم يصل الكود بعد',
             'code_received' => "💬- تم وصول الكود في الاسفل •\n\n🌎 - الدولة: __c__\n☎️ - الرقم: <code>__num__</code>\n💰- السعر :  __p__$\n💬 - الكود : <code>__code__</code>\n🔑 - كلمة المرور: <code>__pass__</code>\n\n✅- قم بتفعيل الرقم في تطبيق تيليجرام ✳️",
+            'purchase_in_progress' => '⏳ توجد عملية شراء قيد التنفيذ، يرجى الانتظار.',
         ],
     ],
     'en' => [
@@ -73,6 +74,7 @@ return [
             'insufficient_balance' => 'Your balance is insufficient',
             'code_pending' => 'The code has not arrived yet',
             'code_received' => "💬- The code has arrived below •\n\n🌎 - Country: __c__\n☎️ - Number: <code>__num__</code>\n💰- Price: __p__$\n💬 - Code: <code>__code__</code>\n🔑 - Password: <code>__pass__</code>\n\n✅- Please activate the number in the Telegram app ✳️",
+            'purchase_in_progress' => 'A purchase is already in progress, please wait.',
         ],
     ],
     'ru' => [
@@ -110,6 +112,7 @@ return [
             'insufficient_balance' => 'Ваш баланс недостаточен',
             'code_pending' => 'Код еще не пришел',
             'code_received' => "💬- Код пришел ниже •\n\n🌎 - Страна: __c__\n☎️ - Номер: <code>__num__</code>\n💰- Цена: __p__$\n💬 - Код: <code>__code__</code>\n🔑 - Пароль: <code>__pass__</code>\n\n✅- Пожалуйста, активируйте номер в приложении Telegram ✳️",
+            'purchase_in_progress' => 'Покупка уже выполняется, подождите.',
         ],
     ],
     'fa' => [
@@ -147,6 +150,7 @@ return [
             'insufficient_balance' => 'موجودی شما کافی نیست',
             'code_pending' => 'کد هنوز نرسیده است',
             'code_received' => "💬- کد در پایین آمده است •\n\n🌎 - کشور: __c__\n☎️ - شماره: <code>__num__</code>\n💰- قیمت: __p__$\n💬 - کد: <code>__code__</code>\n🔑 - کلمه عبور: <code>__pass__</code>\n\n✅- لطفاً شماره را در برنامه تلگرام فعال کنید ✳️",
+            'purchase_in_progress' => 'یک فرایند خرید در حال انجام است، لطفاً کمی صبر کنید.',
         ],
     ],
     'cht' => [
@@ -184,6 +188,7 @@ return [
             'insufficient_balance' => '您的餘額不足',
             'code_pending' => '代碼尚未到達',
             'code_received' => "💬- 代碼已到達如下 •\n\n🌎 - 國家: __c__\n☎️ - 號碼: <code>__num__</code>\n💰- 價格: __p__$\n💬 - 代碼: <code>__code__</code>\n🔑 - 密碼: <code>__pass__</code>\n\n✅- 請在 Telegram 應用中激活該號碼 ✳️",
+            'purchase_in_progress' => '目前有購買請求在處理，請稍候。',
         ],
     ],
     'chb' => [
@@ -221,6 +226,7 @@ return [
             'insufficient_balance' => '您的余额不足',
             'code_pending' => '代码尚未到达',
             'code_received' => "💬- 代码已到达如下 •\n\n🌎 - 国家: __c__\n☎️ - 号码: <code>__num__</code>\n💰- 价格: __p__$\n💬 - 代码: <code>__code__</code>\n🔑 - 密码: <code>__pass__</code>\n\n✅- 请在 Telegram 应用中激活该号码 ✳️",
+            'purchase_in_progress' => '正在处理一次购买请求，请稍候。',
         ],
     ],
     'tr' => [
@@ -258,6 +264,7 @@ return [
             'insufficient_balance' => 'Bakiyen yetersiz',
             'code_pending' => 'Kod henüz gelmedi',
             'code_received' => "💬- Kod aşağıda yer alıyor •\n\n🌎 - Ülke: __c__\n☎️ - Numara: <code>__num__</code>\n💰- Fiyat: __p__$\n💬 - Kod: <code>__code__</code>\n🔑 - Şifre: <code>__pass__</code>\n\n✅- Lütfen numarayı Telegram uygulamasında etkinleştir ✳️",
+            'purchase_in_progress' => 'Bir satın alma işlemi devam ediyor, lütfen bekle.',
         ],
     ],
 ];

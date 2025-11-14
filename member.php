@@ -6,6 +6,10 @@ use Numbers\Language\LanguageManager;
 
 $link = "https://t.me/$botUser?start=$id";
 $languageOptions = $languageManager->options();
+$forcedSubscription = $settings['forced_subscription'] ?? [];
+$subscriptionChannelId = $forcedSubscription['channel_id'] ?? $ch5;
+$subscriptionLink = $forcedSubscription['channel_link'] ?? $ch6;
+$subscriptionEnabled = $forcedSubscription['enabled'] ?? true;
 
 const LANGUAGE_PROMPT = "
 قم باختيار اللغة.
@@ -24,10 +28,11 @@ function saveLangs(): void
 
 function buildReplacements(int $userId, $balance, string $refLink): array
 {
-	global $ch6, $invitePoint, $requestLink, $supportLink;
+	global $invitePoint, $requestLink, $supportLink, $settings, $ch6;
+	$channelLink = $settings['forced_subscription']['channel_link'] ?? $ch6;
 
 	return [
-		'{{channel_link}}' => $ch6,
+		'{{channel_link}}' => $channelLink,
 		'{{invite_point}}' => $invitePoint,
 		'{{ref_link}}' => $refLink,
 		'{{charge_link}}' => $requestLink,
@@ -223,37 +228,43 @@ function confirmPurchase(string $countryCode, array $txt, string $backLabel): vo
 
 function handlePurchase(string $countryCode, array $txt): void
 {
-	global $contries, $point, $points, $id, $api, $names, $stats, $ch1;
+	global $contries, $point, $points, $id, $api, $names, $stats, $ch1, $actionLocker;
 
-	$price = $contries[$countryCode] ?? 0;
-	if ($price <= 0) {
-		alertCallback($txt['no_numbers']);
+	if (!$actionLocker->acquire($id, 'purchase')) {
+		alertCallback($txt['purchase_in_progress']);
 		return;
 	}
 
-	if ($point < $price) {
-		alertCallback($txt['insufficient_balance']);
-		return;
-	}
+	try {
+		$price = $contries[$countryCode] ?? 0;
+		if ($price <= 0) {
+			alertCallback($txt['no_numbers']);
+			return;
+		}
 
-	$numberData = $api->getNumber($countryCode);
-	if (!is_array($numberData)) {
-		alertCallback($txt['no_numbers']);
-		return;
-	}
+		if ($point < $price) {
+			alertCallback($txt['insufficient_balance']);
+			return;
+		}
 
-	$number = $numberData['number'];
-	$hashCode = $numberData['hash_code'];
-	$countryName = $names[$countryCode] ?? $countryCode;
+		$numberData = $api->getNumber($countryCode);
+		if (!is_array($numberData)) {
+			alertCallback($txt['no_numbers']);
+			return;
+		}
 
-	$points[$id] -= $price;
-	$point = $points[$id];
-	savePoint();
+		$number = $numberData['number'];
+		$hashCode = $numberData['hash_code'];
+		$countryName = $names[$countryCode] ?? $countryCode;
 
-	$stats['all']['trybuy'] = ($stats['all']['trybuy'] ?? 0) + 1;
-	saveStats();
+		$points[$id] -= $price;
+		$point = $points[$id];
+		savePoint();
 
-	$channelMessage = "
+		$stats['all']['trybuy'] = ($stats['all']['trybuy'] ?? 0) + 1;
+		saveStats();
+
+		$channelMessage = "
 ✅- تم شراء رقم من البوت بنجاح -✅
 
 ☎️ - الرقم: <code>{$number}</code>
@@ -263,20 +274,23 @@ function handlePurchase(string $countryCode, array $txt): void
 💰 - الرصيد: {$point}
 🆔 - الايدي: <code>{$id}</code>
 ";
-	send($channelMessage, null, $ch1);
+		send($channelMessage, null, $ch1);
 
-	$userMessage = str_replace(
-		["__c__", "__num__", "__p__"],
-		[$countryName, $number, $price],
-		$txt['purchase_success']
-	);
+		$userMessage = str_replace(
+			["__c__", "__num__", "__p__"],
+			[$countryName, $number, $price],
+			$txt['purchase_success']
+		);
 
-	$buttons = mkBtn([
-		[
-			$txt['request_code'] => "getCode#{$hashCode}#{$countryCode}#{$number}"
-		]
-	]);
-	edit($userMessage, $buttons);
+		$buttons = mkBtn([
+			[
+				$txt['request_code'] => "getCode#{$hashCode}#{$countryCode}#{$number}"
+			]
+		]);
+		edit($userMessage, $buttons);
+	} finally {
+		$actionLocker->release($id, 'purchase');
+	}
 }
 
 function deliverCode(array $exData, array $txt): void
@@ -374,8 +388,8 @@ $replacements = buildReplacements($id, $point, $link);
 $txt = prepareStrings($currentLang, $replacements);
 $changeLanguageLabel = $languageManager->label($currentLang, 'change_language', 'Change Language');
 
-if (!check_member($id, $ch5)) {
-	$button = [[['text' => $txt['verify_button'], 'url' => "https://t.me/$botUser?start=0"]]];
+if ($subscriptionEnabled && !check_member($id, $subscriptionChannelId)) {
+	$button = [[['text' => $txt['verify_button'], 'url' => $subscriptionLink]]];
 	if (!empty($text)) {
 		send($txt['verify_text'], $button);
 	} else {

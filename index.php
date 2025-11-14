@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use Numbers\Database\Connection;
 use Numbers\Language\LanguageManager;
-use Numbers\Storage\JsonStorage;
+use Numbers\Service\ActionLocker;
+use Numbers\Storage\DatabaseStorage;
 use Numbers\Telegram\TelegramClient;
 
 require __DIR__ . '/bootstrap.php';
@@ -12,7 +14,9 @@ require_once __DIR__ . '/contries.php';
 require_once __DIR__ . '/api.php';
 
 $languageManager = new LanguageManager(require BASE_PATH . '/lang/translations.php');
-$storage = new JsonStorage([
+$connection = new Connection(BASE_PATH . '/storage/database.sqlite');
+$pdo = $connection->getPdo();
+$storage = new DatabaseStorage($pdo, [
     'points' => BASE_PATH . '/points.json',
     'stats' => BASE_PATH . '/stats.json',
     'operations' => BASE_PATH . '/operations.json',
@@ -21,7 +25,9 @@ $storage = new JsonStorage([
     'info' => BASE_PATH . '/info.json',
     'contries' => BASE_PATH . '/contries.json',
     'langs' => BASE_PATH . '/langs.json',
+    'settings' => BASE_PATH . '/settings.json',
 ]);
+$actionLocker = new ActionLocker($pdo);
 
 $points = $storage->load('points', []);
 $stats = $storage->load('stats', []);
@@ -31,6 +37,16 @@ $bans = $storage->load('bans', []);
 $info = $storage->load('info', []);
 $contries = $storage->load('contries', []);
 $langs = $storage->load('langs', []);
+$settings = $storage->load('settings', [
+    'forced_subscription' => [
+        'enabled' => true,
+        'channel_id' => $ch5,
+        'channel_link' => $ch6,
+    ],
+    'pricing' => [
+        'margin_percent' => 0,
+    ],
+]);
 
 $telegramClient = new TelegramClient($token);
 define('API_KEY', $token);
@@ -155,6 +171,12 @@ function saveContries()
 {
     global $contries, $storage;
     $storage->persist('contries', $contries);
+}
+
+function saveSettings()
+{
+    global $settings, $storage;
+    $storage->persist('settings', $settings);
 }
 
 $back = mkBtn(array(

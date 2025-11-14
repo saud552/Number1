@@ -66,8 +66,13 @@ if ($text == "/start" || $data == "back") {
 			array(
 				"اضافة دولة" => "addContry",
 				"حذف دولة" => "remContry"
-			),			
+			),
 			array(
+				"الاشتراك الاجباري" => "subSettings",
+				"استيراد الدول" => "importCountries"
+			),
+			array(
+				"اعدادات التسعير" => "pricingSettings",
 				"الاحصائيات" => "stats"
 			)				
 		)
@@ -242,6 +247,119 @@ if ($text == "/start" || $data == "back") {
 		);
 	$tx ="جميع الوكلاء";
 	edit($tx, mkBtn ($btn));
+} else if ($data == "subSettings") {
+	$status = ($settings['forced_subscription']['enabled'] ?? true) ? "مفعلة ✅" : "معطلة ❌";
+	$channelId = $settings['forced_subscription']['channel_id'] ?? $ch5;
+	$channelLink = $settings['forced_subscription']['channel_link'] ?? $ch6;
+	$tx = "حالة الاشتراك الإجباري: {$status}\nالقناة الحالية: {$channelId}\nالرابط: {$channelLink}";
+	$btn = mkBtn([
+		[
+			"تفعيل" => "toggleSub#on",
+			"تعطيل" => "toggleSub#off"
+		],
+		[
+			"تغيير القناة" => "setSubChannel"
+		],
+		[
+			"رجوع" => "back"
+		]
+	]);
+	edit($tx, $btn);
+} else if ($exData[0] == "toggleSub") {
+	$settings['forced_subscription']['enabled'] = ($exData[1] ?? 'on') === 'on';
+	saveSettings();
+	$tx = $settings['forced_subscription']['enabled'] ? "تم تفعيل الاشتراك الإجباري." : "تم تعطيل الاشتراك الإجباري.";
+	edit($tx, $back);
+} else if ($data == "setSubChannel") {
+	$tx = "أرسل ايدي القناة في السطر الأول والرابط في السطر الثاني.";
+	$info[$id]['action'] = "setSubChannel";
+	saveInfo();
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "setSubChannel") {
+	$parts = array_values(array_filter(array_map('trim', preg_split("/\r\n|\n|\r/", $text))));
+	if (count($parts) < 2) {
+		$parts = preg_split('/\s+/', trim($text));
+	}
+	if (count($parts) >= 2) {
+		$settings['forced_subscription']['channel_id'] = $parts[0];
+		$settings['forced_subscription']['channel_link'] = $parts[1];
+		saveSettings();
+		$info[$id]['action'] = "";
+		saveInfo();
+		$tx = "تم تحديث قناة الاشتراك الإجباري.";
+	} else {
+		$tx = "يرجى إرسال ايدي القناة في السطر الأول والرابط في السطر الثاني.";
+	}
+	edit($tx, $back);
+} else if ($data == "importCountries") {
+	$get = $api->getCountries();
+	if (!is_array($get)) {
+		edit("تعذر جلب الدول من المزود.", $back);
+	} else {
+		$margin = (float)($settings['pricing']['margin_percent'] ?? 0);
+		$applied = 0;
+		foreach ($get as $code => $basePrice) {
+			if (!is_numeric($basePrice)) {
+				continue;
+			}
+			$price = (float)$basePrice;
+			if ($margin !== 0.0) {
+				$price += $price * ($margin / 100);
+			}
+			$contries[$code] = round($price, 2);
+			$applied++;
+		}
+		saveContries();
+		$tx = "تم استيراد {$applied} دولة وتحديث أسعارها.";
+		edit($tx, $back);
+	}
+} else if ($data == "pricingSettings") {
+	$margin = $settings['pricing']['margin_percent'] ?? 0;
+	$tx = "النسبة الحالية للأرباح: {$margin}%\nيمكنك تعيين نسبة عامة أو سعر مخصص لدولة معينة.";
+	$btn = mkBtn([
+		[
+			"تعديل النسبة" => "setMargin",
+			"سعر مخصص" => "setCustomPrice"
+		],
+		[
+			"رجوع" => "back"
+		]
+	]);
+	edit($tx, $btn);
+} else if ($data == "setMargin") {
+	$info[$id]['action'] = "setMargin";
+	saveInfo();
+	$tx = "أرسل النسبة المئوية للأرباح (مثال 15 أو 12.5).";
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "setMargin") {
+	if (is_numeric($text)) {
+		$settings['pricing']['margin_percent'] = (float)$text;
+		saveSettings();
+		$info[$id]['action'] = "";
+		saveInfo();
+		$tx = "تم تحديث النسبة المئوية للأرباح.";
+	} else {
+		$tx = "يرجى إرسال قيمة رقمية فقط.";
+	}
+	edit($tx, $back);
+} else if ($data == "setCustomPrice") {
+	$info[$id]['action'] = "customPrice";
+	saveInfo();
+	$tx = "أرسل كود الدولة والسعر مثال: US 1.75";
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "customPrice") {
+	$parts = preg_split('/\s+/', trim($text));
+	if (count($parts) === 2 && is_numeric($parts[1])) {
+		$code = strtoupper($parts[0]);
+		$contries[$code] = (float)$parts[1];
+		saveContries();
+		$info[$id]['action'] = "";
+		saveInfo();
+		$tx = "تم تحديث سعر الدولة {$code}.";
+	} else {
+		$tx = "صيغة غير صحيحة، استخدم مثال: US 1.75";
+	}
+	edit($tx, $back);
 } else if ($data == "addContry" || $exData[0] == 'next' || $exData[0] == 'before') {
 	#Lista:
 	$get = $api->getCountries();

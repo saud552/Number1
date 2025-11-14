@@ -23,3 +23,6 @@ spl_autoload_register(function (string $class): void {
 if (!is_dir(BASE_PATH . '/logs')) {
     mkdir(BASE_PATH . '/logs', 0775, true);
 }
+if (!is_dir(BASE_PATH . '/storage')) {
+    mkdir(BASE_PATH . '/storage', 0775, true);
+}
