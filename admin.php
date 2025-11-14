@@ -1,5 +1,5 @@
 <?php 
-$lang = json_decode(file_get_contents("langs.json"),1)??[];
+$lang = $langs ?? [];
 $txt = array(
 "ar" => array(
 "1" => "✅ - تم إعادة شحن حسابك بـ مبلغ __point__",
@@ -36,6 +36,12 @@ $txt = array(
     "2" => "__point__ 已从您的账户中扣除",
     "3" => "您已被禁止使用机器人",
     "4" => "您已被解除禁止使用机器人",
+),
+"tr" => array(
+    "1" => "✅ - Hesabınıza __point__ yüklendi",
+    "2" => "__point__ bakiyenizden düşüldü",
+    "3" => "Botu kullanmanız engellendi",
+    "4" => "Botu kullanma engeliniz kaldırıldı",
 )
 );
 if ($text == "/start" || $data == "back") {

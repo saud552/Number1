@@ -1135,6 +1135,8 @@ $tnames=array(
 	
 );
 
+$tnames['tr'] = $tnames['en'];
+
 
 
 
