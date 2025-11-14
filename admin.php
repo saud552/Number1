@@ -44,7 +44,7 @@ $txt = array(
     "4" => "Botu kullanma engeliniz kaldırıldı",
 )
 );
-if ($text == "/start" || $data == "back") {
+if ($text == "/start" || $text == "/admin" || $data == "back") {
 	$btn = 
 	mkBtn(
 		array(
@@ -319,11 +319,15 @@ if ($text == "/start" || $data == "back") {
 	}
 } else if ($data == "pricingSettings") {
 	$margin = $settings['pricing']['margin_percent'] ?? 0;
-	$tx = "النسبة الحالية للأرباح: {$margin}%\nيمكنك تعيين نسبة عامة أو سعر مخصص لدولة معينة.";
+	$starPrice = $settings['stars']['usd_per_star'] ?? 0.0;
+	$tx = "النسبة الحالية للأرباح: {$margin}%\nسعر النجمة بالدولار: {$starPrice}\nيمكنك تعيين نسبة عامة أو سعر مخصص لدولة معينة.";
 	$btn = mkBtn([
 		[
 			"تعديل النسبة" => "setMargin",
 			"سعر مخصص" => "setCustomPrice"
+		],
+		[
+			"تعديل سعر النجوم" => "setStarPrice"
 		],
 		[
 			"رجوع" => "back"
@@ -427,7 +431,7 @@ if ($text == "/start" || $data == "back") {
 	} else if ($exData[0] == 'next') {
 		$start= $exData[1];
 		if ($start > count ($get)) {
-			bot('answercallbackquery',[
+			bot('answerCallbackQuery',[
 				'callback_query_id'=>$update->callback_query->id,
 				'show_alert'=>true,
 				'text' => "لا توجد قائمة تاليه"
@@ -439,7 +443,7 @@ if ($text == "/start" || $data == "back") {
 		if($start >= 30) {$start -=30;}
 		else if ($start > 0) { $start = 0;}
 		else  {
-			bot('answercallbackquery',[
+			bot('answerCallbackQuery',[
 				'callback_query_id'=>$update->callback_query->id,
 				'show_alert'=>true,
 				'text' => "لا توجد قائمة سابقة"
@@ -525,7 +529,7 @@ if ($text == "/start" || $data == "back") {
 	} else if ($exData[0] == 'NEXT') {
 		$start= $exData[1];
 		if ($start > count ($contries)) {
-			bot('answercallbackquery',[
+			bot('answerCallbackQuery',[
 				'callback_query_id'=>$update->callback_query->id,
 				'show_alert'=>true,
 				'text' => "لا توجد قائمة تاليه"
@@ -537,7 +541,7 @@ if ($text == "/start" || $data == "back") {
 		if($start >= 30) {$start -=30;}
 		else if ($start > 0) { $start = 0;}
 		else  {
-			bot('answercallbackquery',[
+			bot('answerCallbackQuery',[
 				'callback_query_id'=>$update->callback_query->id,
 				'show_alert'=>true,
 				'text' => "لا توجد قائمة سابقة"
@@ -587,4 +591,20 @@ if ($text == "/start" || $data == "back") {
 	//send(json_encode($contries));
 	$tx="تم الحذف بنجاح";
 	edit($tx,$back);
+} else if ($data == "setStarPrice") {
+	$info[$id]['action'] = "setStarPrice";
+	saveInfo();
+	$tx = "أرسل سعر نجمة واحدة بالدولار (مثال 0.011).";
+	edit($tx, $back);
+} else if ($text && ($info[$id]['action'] ?? '') === "setStarPrice") {
+	if (is_numeric($text) && $text > 0) {
+		$settings['stars']['usd_per_star'] = (float)$text;
+		saveSettings();
+		$info[$id]['action'] = "";
+		saveInfo();
+		$tx = "تم تحديث سعر النجوم.";
+	} else {
+		$tx = "يرجى إرسال قيمة رقمية صحيحة.";
+	}
+	edit($tx, $back);
 }

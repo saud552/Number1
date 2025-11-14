@@ -1,100 +1,18 @@
 <?php
 
 use Numbers\Language\LanguageManager;
+use Numbers\Support\Conversation;
 
 /** @var LanguageManager $languageManager */
 
 $link = "https://t.me/$botUser?start=$id";
-$languageOptions = $languageManager->options();
-$forcedSubscription = $settings['forced_subscription'] ?? [];
-$subscriptionChannelId = $forcedSubscription['channel_id'] ?? $ch5;
-$subscriptionLink = $forcedSubscription['channel_link'] ?? $ch6;
-$subscriptionEnabled = $forcedSubscription['enabled'] ?? true;
-
-const LANGUAGE_PROMPT = "
-قم باختيار اللغة.
-Please choose a language.
-Пожалуйста, выберите язык.
- لطفاً زبان را انتخاب کنید.
- 請選擇語言。
- 请选擇语言。
-";
-
-function saveLangs(): void
-{
-	global $langs, $storage;
-	$storage->persist('langs', $langs);
-}
-
-function buildReplacements(int $userId, $balance, string $refLink): array
-{
-	global $invitePoint, $requestLink, $supportLink, $settings, $ch6;
-	$channelLink = $settings['forced_subscription']['channel_link'] ?? $ch6;
-
-	return [
-		'{{channel_link}}' => $channelLink,
-		'{{invite_point}}' => $invitePoint,
-		'{{ref_link}}' => $refLink,
-		'{{charge_link}}' => $requestLink,
-		'{{support_link}}' => $supportLink,
-		'{{user_id}}' => (string)$userId,
-		'{{balance}}' => (string)$balance,
-	];
-}
-
-function prepareStrings(string $lang, array $replacements): array
-{
-	global $languageManager;
-
-	$strings = $languageManager->strings($lang);
-	foreach ($strings as $key => $value) {
-		if (is_string($value)) {
-			$strings[$key] = str_replace(array_keys($replacements), array_values($replacements), $value);
-		}
-	}
-
-	return $strings;
-}
-
-function ensureLanguageCode(?string $code): string
-{
-	global $languageManager;
-	if ($code && $languageManager->has($code)) {
-		return $code;
-	}
-	return 'ar';
-}
-
-function showLanguagePrompt(string $prompt, array $languageOptions, ?string $currentLang, $text): void
-{
-	global $languageManager;
-
-	$buttons = [];
-	foreach ($languageOptions as $code => $label) {
-		$buttons[] = [$label => "lang#$code"];
-	}
-
-	if ($currentLang) {
-		$buttons[] = [
-			$languageManager->label($currentLang, 'back', 'Back') => 'back'
-		];
-	}
-
-	$keyboard = mkBtn($buttons);
-	if ($text) {
-		send($prompt, $keyboard);
-	} else {
-		edit($prompt, $keyboard);
-	}
-	exit;
-}
 
 function displayMainMenu(array $txt, string $changeLanguageLabel, bool $asEdit = false): void
 {
 	global $requestLink, $supportLink, $ch4;
 
 	$buttons = mkBtn([
-		[$txt['menu_purchase'] => 'buy'],
+		[$txt['menu_purchase_usd'] => 'buyUsd', $txt['menu_purchase_stars'] => 'buyStars'],
 		[$txt['menu_recharge'] => $requestLink, $txt['menu_support'] => $supportLink],
 		[$txt['menu_agents'] => 'wk', $txt['menu_bot_activations'] => $ch4],
 		[$txt['menu_free_balance'] => 'inviteLink'],
@@ -139,28 +57,28 @@ function alertCallback(string $message): void
 		return;
 	}
 
-	bot('answercallbackquery', [
+	bot('answerCallbackQuery', [
 		'callback_query_id' => $update->callback_query->id,
 		'show_alert' => true,
 		'text' => $message,
 	]);
 }
 
-function paginateCountries(string $action, array $txt, string $backLabel, array $exData): void
+function paginateCountries(string $action, array $txt, string $backLabel, array $exData, string $method): void
 {
-	global $contries, $tnames, $currentLang;
+	global $contries, $tnames, $currentLang, $settings;
 
 	$start = 0;
 	$perPage = 30;
 
 	if ($action === 'next') {
-		$start = (int)($exData[1] ?? 0);
+		$start = (int)($exData[2] ?? 0);
 		if ($start > count($contries)) {
 			alertCallback($txt['no_next_page']);
 			return;
 		}
 	} elseif ($action === 'before') {
-		$start = (int)($exData[1] ?? 0);
+		$start = (int)($exData[2] ?? 0);
 		if ($start >= $perPage) {
 			$start -= $perPage;
 		} elseif ($start > 0) {
@@ -186,9 +104,18 @@ function paginateCountries(string $action, array $txt, string $backLabel, array 
 		}
 
 		$name = $tnames[$currentLang][$code] ?? $tnames['en'][$code] ?? $code;
+		$label = "{$name} | {$price}$";
+		if ($method === 'stars') {
+			$usdPerStar = (float)($settings['stars']['usd_per_star'] ?? 0);
+			if ($usdPerStar > 0) {
+				$stars = (int)ceil($price / $usdPerStar);
+				$label = sprintf("%s | %s$ • %d⭐️", $name, $price, $stars);
+			}
+		}
+
 		$currentRow[] = [
-			'text' => "{$name} | $price",
-			'callback_data' => "getNum#{$code}"
+			'text' => $label,
+			'callback_data' => "getNum#{$method}#{$code}"
 		];
 		if (count($currentRow) === 2) {
 			$rows[] = $currentRow;
@@ -201,8 +128,8 @@ function paginateCountries(string $action, array $txt, string $backLabel, array 
 	}
 
 	$rows[] = [
-		['text' => $txt['button_previous'], 'callback_data' => "before#{$start}"],
-		['text' => $txt['button_next'], 'callback_data' => "next#{$end}"],
+		['text' => $txt['button_previous'], 'callback_data' => "before#{$method}#{$start}"],
+		['text' => $txt['button_next'], 'callback_data' => "next#{$method}#{$end}"],
 	];
 	$rows[] = [
 		['text' => $backLabel, 'callback_data' => 'back']
@@ -211,24 +138,52 @@ function paginateCountries(string $action, array $txt, string $backLabel, array 
 	edit($txt['country_selection'], $rows);
 }
 
-function confirmPurchase(string $countryCode, array $txt, string $backLabel): void
+function confirmPurchase(string $countryCode, array $txt, string $backLabel, string $method): void
 {
-	global $tnames, $currentLang, $names;
+	global $tnames, $currentLang, $names, $contries, $settings;
 
 	$name = $tnames[$currentLang][$countryCode] ?? $tnames['en'][$countryCode] ?? ($names[$countryCode] ?? $countryCode);
-	$message = $txt['disclaimer'] . "\n\n" . $name;
+	$price = $contries[$countryCode] ?? 0;
+	if ($price <= 0) {
+		alertCallback($txt['no_numbers']);
+		return;
+	}
+
+	if ($method === 'stars') {
+		$usdPerStar = (float)($settings['stars']['usd_per_star'] ?? 0);
+		if ($usdPerStar <= 0) {
+			alertCallback($txt['stars_disabled'] ?? 'خيار النجوم غير متاح حالياً.');
+			return;
+		}
+		$stars = (int)ceil($price / $usdPerStar);
+		$message = str_replace(
+			["__c__", "__p__", "__s__"],
+			[$name, $price, $stars],
+			$txt['stars_purchase_disclaimer'] ?? $txt['disclaimer']
+		);
+		$confirmCallback = "getNumber#stars#{$countryCode}";
+	} else {
+		$message = $txt['disclaimer'] . "\n\n" . $name;
+		$confirmCallback = "getNumber#usd#{$countryCode}";
+	}
+
 	$buttons = mkBtn([
 		[
-			$txt['confirm_purchase'] => "getNumber#{$countryCode}",
+			$txt['confirm_purchase'] => $confirmCallback,
 			$backLabel => 'back'
 		]
 	]);
 	edit($message, $buttons);
 }
 
-function handlePurchase(string $countryCode, array $txt): void
+function handlePurchase(string $countryCode, array $txt, string $backLabel, string $method): void
 {
-	global $contries, $point, $points, $id, $api, $names, $stats, $ch1, $actionLocker;
+	if ($method === 'stars') {
+		initiateStarPurchase($countryCode, $txt, $backLabel);
+		return;
+	}
+
+	global $contries, $point, $points, $id, $api, $names, $stats, $actionLocker;
 
 	if (!$actionLocker->acquire($id, 'purchase')) {
 		alertCallback($txt['purchase_in_progress']);
@@ -264,33 +219,88 @@ function handlePurchase(string $countryCode, array $txt): void
 		$stats['all']['trybuy'] = ($stats['all']['trybuy'] ?? 0) + 1;
 		saveStats();
 
-		$channelMessage = "
-✅- تم شراء رقم من البوت بنجاح -✅
-
-☎️ - الرقم: <code>{$number}</code>
-🌎 - الدولة: {$countryName}
-💢 - رمز الدولة: {$countryCode}
-💵- السعر :  {$price}$
-💰 - الرصيد: {$point}
-🆔 - الايدي: <code>{$id}</code>
-";
-		send($channelMessage, null, $ch1);
-
-		$userMessage = str_replace(
-			["__c__", "__num__", "__p__"],
-			[$countryName, $number, $price],
-			$txt['purchase_success']
-		);
-
-		$buttons = mkBtn([
-			[
-				$txt['request_code'] => "getCode#{$hashCode}#{$countryCode}#{$number}"
-			]
-		]);
-		edit($userMessage, $buttons);
+		respondWithPurchaseDetails($countryCode, $number, $price, $hashCode, $txt, true);
 	} finally {
 		$actionLocker->release($id, 'purchase');
 	}
+}
+
+function initiateStarPurchase(string $countryCode, array $txt, string $backLabel): void
+{
+	global $contries, $settings, $names, $op, $id;
+
+	$price = $contries[$countryCode] ?? 0;
+	if ($price <= 0) {
+		alertCallback($txt['no_numbers']);
+		return;
+	}
+
+	$usdPerStar = (float)($settings['stars']['usd_per_star'] ?? 0);
+	if ($usdPerStar <= 0) {
+		alertCallback($txt['stars_disabled'] ?? 'خيار النجوم غير متاح حالياً.');
+		return;
+	}
+
+	$stars = (int)ceil($price / $usdPerStar);
+	if ($stars <= 0) {
+		$stars = 1;
+	}
+
+	$payload = bin2hex(random_bytes(16));
+	if (!isset($op[STAR_OPERATIONS_KEY])) {
+		$op[STAR_OPERATIONS_KEY] = [];
+	}
+	$op[STAR_OPERATIONS_KEY][$payload] = [
+		'payload' => $payload,
+		'user_id' => $id,
+		'country' => $countryCode,
+		'price' => $price,
+		'stars' => $stars,
+		'created_at' => time(),
+	];
+	saveOp();
+
+	$countryName = $names[$countryCode] ?? $countryCode;
+
+	$description = str_replace(
+		["__c__", "__p__", "__s__"],
+		[$countryName, $price, $stars],
+		$txt['stars_invoice_description'] ?? ''
+	);
+
+	$response = bot('createInvoiceLink', [
+		'title' => $txt['stars_invoice_title'] ?? 'شراء حساب تيليجرام',
+		'description' => $description,
+		'payload' => $payload,
+		'currency' => 'XTR',
+		'prices' => json_encode([
+			['label' => $countryName, 'amount' => $stars],
+		]),
+	]);
+
+	$invoiceLink = $response->result ?? null;
+	if (!$invoiceLink) {
+		unset($op[STAR_OPERATIONS_KEY][$payload]);
+		saveOp();
+		alertCallback($txt['purchase_failed'] ?? 'حدث خطأ، حاول لاحقاً.');
+		return;
+	}
+
+	$message = str_replace(
+		["__c__", "__p__", "__s__"],
+		[$countryName, $price, $stars],
+		$txt['stars_invoice_message'] ?? ''
+	);
+
+	$buttons = [
+		[
+			['text' => $txt['stars_invoice_button'] ?? 'الدفع بالنجوم', 'url' => $invoiceLink],
+		],
+		[
+			['text' => $backLabel, 'callback_data' => 'back'],
+		],
+	];
+	edit($message, $buttons);
 }
 
 function deliverCode(array $exData, array $txt): void
@@ -362,30 +372,9 @@ if (($ex[0] ?? null) === "/start") {
 	}
 }
 
-if (!empty($exData) && $exData[0] === "lang") {
-	$selectedLang = ensureLanguageCode($exData[1]);
-	$langs[$id] = $selectedLang;
-	saveLangs();
-	$mainMenuLabel = $languageManager->label($selectedLang, 'main_menu', 'Main Menu');
-	edit("⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️", [[['text' => $mainMenuLabel, 'callback_data' => 'back']]]);
-	return;
-}
-
-if (!isset($langs[$id])) {
-	showLanguagePrompt(LANGUAGE_PROMPT, $languageOptions, null, $text ?? null);
-}
-
-$currentLang = ensureLanguageCode($langs[$id]);
-if ($currentLang !== ($langs[$id] ?? null)) {
-	$langs[$id] = $currentLang;
-	saveLangs();
-}
-
 $backLabel = $languageManager->label($currentLang, 'back', 'Back');
 $backKeyboard = mkBtn([[$backLabel => 'back']]);
 
-$replacements = buildReplacements($id, $point, $link);
-$txt = prepareStrings($currentLang, $replacements);
 $changeLanguageLabel = $languageManager->label($currentLang, 'change_language', 'Change Language');
 $maintenanceEnabled = $settings['maintenance']['enabled'] ?? false;
 $maintenanceMessage = $settings['maintenance']['message'] ?? $txt['maintenance_message'];
@@ -395,16 +384,6 @@ if ($maintenanceEnabled && $id != $admin) {
 		send($maintenanceMessage);
 	} else {
 		edit($maintenanceMessage);
-	}
-	return;
-}
-
-if ($subscriptionEnabled && !check_member($id, $subscriptionChannelId)) {
-	$button = [[['text' => $txt['verify_button'], 'url' => $subscriptionLink]]];
-	if (!empty($text)) {
-		send($txt['verify_text'], $button);
-	} else {
-		edit($txt['verify_text'], $button);
 	}
 	return;
 }
@@ -423,13 +402,13 @@ if (($text ?? '') === "/start") {
 			$invite['invited'][$inviter] = $id;
 			saveInvite();
 
-			$inviterLang = ensureLanguageCode($langs[$inviter] ?? null);
-			$inviterReplacements = buildReplacements(
+			$inviterLang = Conversation::ensureLanguageCode($languageManager, $langs[$inviter] ?? null);
+			$inviterReplacements = Conversation::buildReplacements(
 				$inviter,
 				$points[$inviter] ?? 0,
 				"https://t.me/$botUser?start=$inviter"
 			);
-			$inviterStrings = prepareStrings($inviterLang, $inviterReplacements);
+			$inviterStrings = Conversation::prepareStrings($languageManager, $inviterLang, $inviterReplacements);
 			send($inviterStrings['invite_reward'], null, $inviter);
 		}
 		savePoint();
@@ -451,7 +430,13 @@ switch ($data ?? '') {
 		edit($txt['support_info'], $backKeyboard);
 		return;
 	case 'changeLange':
-		showLanguagePrompt(LANGUAGE_PROMPT, $languageOptions, $currentLang, $text ?? null);
+		$prompt = Conversation::languagePrompt($languageManager, $currentLang, $backLabel);
+		$keyboard = mkBtn($prompt['buttons']);
+		if (!empty($text)) {
+			send($prompt['text'], $keyboard);
+		} else {
+			edit($prompt['text'], $keyboard);
+		}
 		return;
 	case 'wk':
 		listAgents($txt, $backKeyboard);
@@ -459,8 +444,11 @@ switch ($data ?? '') {
 	case 'inviteLink':
 		edit($txt['invite_info'], $backKeyboard);
 		return;
-	case 'buy':
-		paginateCountries('buy', $txt, $backLabel, []);
+	case 'buyUsd':
+		paginateCountries('buy', $txt, $backLabel, [], 'usd');
+		return;
+	case 'buyStars':
+		paginateCountries('buy', $txt, $backLabel, [], 'stars');
 		return;
 }
 
@@ -468,13 +456,16 @@ if (!empty($exData)) {
 	switch ($exData[0]) {
 		case 'next':
 		case 'before':
-			paginateCountries($exData[0], $txt, $backLabel, $exData);
+			$method = $exData[1] ?? 'usd';
+			paginateCountries($exData[0], $txt, $backLabel, $exData, $method);
 			return;
 		case 'getNum':
-			confirmPurchase($exData[1], $txt, $backLabel);
+			$method = $exData[1] ?? 'usd';
+			confirmPurchase($exData[2] ?? '', $txt, $backLabel, $method);
 			return;
 		case 'getNumber':
-			handlePurchase($exData[1], $txt);
+			$method = $exData[1] ?? 'usd';
+			handlePurchase($exData[2] ?? '', $txt, $backLabel, $method);
 			return;
 		case 'getCode':
 			deliverCode($exData, $txt);

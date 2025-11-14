@@ -12,7 +12,7 @@ class Api
 
 	private function request(array $params): ?array
 	{
-		$query = http_build_query(array_merge(['apiKay' => $this->apiKey], $params));
+		$query = http_build_query(array_merge(['apiKey' => $this->apiKey], $params));
 		$url = "{$this->baseUrl}?{$query}";
 
 		$ch = curl_init($url);
