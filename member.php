@@ -278,7 +278,10 @@ function initiateStarPurchase(string $countryCode, array $txt, string $backLabel
 		]),
 	]);
 
-	$invoiceLink = $response->result ?? null;
+	$invoiceLink = null;
+	if ($response && ($response->ok ?? false) === true) {
+		$invoiceLink = $response->result ?? null;
+	}
 	if (!$invoiceLink) {
 		unset($op[STAR_OPERATIONS_KEY][$payload]);
 		saveOp();

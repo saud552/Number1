@@ -504,11 +504,11 @@ if ($text == "/start" || $text == "/admin" || $data == "back") {
 	$info[$id]['contry']=$exData[1];
 	saveInfo();
 	$tx = "قم بارسال سعر البيع";
-	$btn =mkBtn (
-		array(
+	$btn = mkBtn([
+		[
 			"رجوع🔙" => $exData[2]
-		)
-	);
+		]
+	]);
 	edit($tx,$btn);
 } else if ($text && $info[$id]['action']=="addContry") {
 	if ( is_numeric($text) && $text > 0 ) {

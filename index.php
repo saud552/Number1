@@ -86,6 +86,10 @@ if (isset($_GET['setup_webhook'])) {
 function check_member($id, $chat)
 {
     $response = bot('getChatMember', ["chat_id" => $chat, "user_id" => $id]);
+    if (!$response || ($response->ok ?? false) !== true || !isset($response->result)) {
+        return false;
+    }
+
     $status = $response->result->status ?? null;
     if ($status === 'left' || $status === 'kicked' || $status === null) {
         return false;
