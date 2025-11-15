@@ -1,0 +1,62 @@
+# Environment
+.env
+
+# Database
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Logs
+logs/*.log
+logs/*.txt
+
+# Cache
+cache/*
+!cache/.gitkeep
+
+# Backup
+backup_*/
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+
+# Error files
+error.txt
+errors.log
+
+# Old JSON files (after migration)
+points.json
+stats.json
+operations.json
+invites.json
+bans.json
+info.json
+langs.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Composer
+/vendor/
+composer.lock
+
+# Node (if using npm for frontend)
+node_modules/
+package-lock.json
+
+# Test files
+test.php
+test_*.php
+debug.php
